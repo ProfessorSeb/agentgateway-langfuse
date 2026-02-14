@@ -55,9 +55,13 @@ AgentGateway natively emits OpenTelemetry traces for every LLM request. A lightw
 - **Kubernetes-native**: Everything runs as standard K8s resources managed via Gateway API
 - **Fan-out capable**: Send traces to Langfuse + any other OTLP-compatible backend simultaneously
 
+## Quick Start (Kind Cluster)
+
+**New to AgentGateway?** Follow the [Kind Quickstart Guide](docs/quickstart-kind.md) to get AgentGateway 2.1 OSS + Langfuse running on a local kind cluster in under 10 minutes.
+
 ## Prerequisites
 
-- Kubernetes cluster with AgentGateway deployed ([quickstart](https://docs.solo.io/agentgateway/latest/quickstart/))
+- Kubernetes cluster with AgentGateway deployed ([quickstart](https://docs.solo.io/agentgateway/latest/quickstart/) or [kind quickstart](docs/quickstart-kind.md))
 - Langfuse account ([cloud](https://cloud.langfuse.com) or [self-hosted](https://langfuse.com/self-hosting))
 - `kubectl` access to the cluster
 - At least one LLM gateway route configured (e.g., OpenAI)
