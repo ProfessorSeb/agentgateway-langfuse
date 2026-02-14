@@ -1,0 +1,45 @@
+# AgentGateway Enterprise tracing configuration
+# Points AgentGateway proxies to the Langfuse OTel Collector
+#
+# For AgentGateway OSS, set OTEL_EXPORTER_OTLP_ENDPOINT env var instead
+---
+apiVersion: enterpriseagentgateway.solo.io/v1alpha1
+kind: EnterpriseAgentgatewayParameters
+metadata:
+  name: tracing
+  namespace: agentgateway-system
+spec:
+  rawConfig:
+    config:
+      tracing:
+        otlpEndpoint: grpc://langfuse-otel-collector.agentgateway-system.svc.cluster.local:4317
+        otlpProtocol: grpc
+        randomSampling: true
+        fields:
+          add:
+            # Static
+            gen_ai.operation.name: '"chat"'
+            # LLM core
+            gen_ai.system: "llm.provider"
+            gen_ai.request.model: "llm.requestModel"
+            gen_ai.response.model: "llm.responseModel"
+            gen_ai.streaming: "llm.streaming"
+            # Token usage
+            gen_ai.usage.prompt_tokens: "llm.inputTokens"
+            gen_ai.usage.completion_tokens: "llm.outputTokens"
+            gen_ai.usage.total_tokens: "llm.totalTokens"
+            gen_ai.usage.count_tokens: "llm.countTokens"
+            # LLM parameters
+            gen_ai.request.temperature: "llm.params.temperature"
+            gen_ai.request.top_p: "llm.params.top_p"
+            gen_ai.request.max_tokens: "llm.params.max_tokens"
+            # Prompt & completion content
+            gen_ai.prompt: "llm.prompt"
+            gen_ai.completion: "llm.completion"
+            # Request context
+            http.method: "request.method"
+            http.path: "request.path"
+            http.host: "request.host"
+            http.status_code: "response.code"
+            # Source
+            client.address: "source.address"

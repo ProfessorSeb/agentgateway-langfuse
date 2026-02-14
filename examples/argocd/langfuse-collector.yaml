@@ -1,0 +1,100 @@
+# Basic Langfuse OTel Collector for AgentGateway
+# Receives OTLP traces from AgentGateway and forwards to Langfuse
+#
+# Before deploying:
+#   1. Replace <YOUR_LANGFUSE_HOST> with your Langfuse URL
+#   2. Replace <YOUR_BASE64_CREDENTIALS> with base64(public_key:secret_key)
+#
+# Deploy: kubectl apply -f langfuse-collector.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: langfuse-otel-collector-config
+  namespace: agentgateway-system
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    exporters:
+      otlphttp/langfuse:
+        endpoint: http://<YOUR_LANGFUSE_HOST>/api/public/otel
+        headers:
+          Authorization: "Basic <YOUR_BASE64_CREDENTIALS>"
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    processors:
+      batch:
+        send_batch_size: 1000
+        timeout: 5s
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/langfuse]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langfuse-otel-collector
+  namespace: agentgateway-system
+  labels:
+    app: langfuse-otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langfuse-otel-collector
+  template:
+    metadata:
+      labels:
+        app: langfuse-otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.132.1
+          args: ["--config=/conf/config.yaml"]
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: langfuse-otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: langfuse-otel-collector
+  namespace: agentgateway-system
+spec:
+  selector:
+    app: langfuse-otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
